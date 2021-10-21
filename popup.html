@@ -5,7 +5,7 @@
     <style>
     #main{
 		padding: 10px;
-		height: 300px;
+		height: 400px;
 		width: 400px;
 		font-family: Helvetica, Ubuntu, Arial, sans-serif;
 	}
@@ -15,13 +15,13 @@
   </head>
   <div id="main">
 	<h3>Advert analyser</h3>
-  Click here to analyse: <input type="submit" id="go"/>
-	<p id="numAds"></p>
-  <p id="adArea"></p>
-  <p id="pArea"></p>
-  <p id="gaps"></p>
-  <p id="adDiff"></p>
-  <p id="pDiff"></p>
-
+  <span id="goArea">Click here to analyse: &nbsp;<input type="submit" id="go" value="Scan page"/></span><br><br>
+  <img id="loadImage" src="./load.gif"/>
+  <div id="loading"><br><br>
+    <p>Scanning page... this will take several seconds</p>
+    <p style="color:red;font-style:italic;">Do not click away from this extension window while scanning</p>
+  </div>
+	
+  <div id="conclude"></div>
   </div>
 </html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Getting Started with ml5.js</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+  </head>
+  <body>
+    <script>
+        const data = [
+            {sigma:-19, var:0, distr:'Top'},
+            {sigma:-13, var:2, distr:'Top'},
+            {sigma:15, var:2, distr:'Bottom'},
+            {sigma:0, var:0, distr:'Equal'},
+            {sigma:-19, var:0, distr:'Top'},
+            {sigma:0, var:0, distr:'Equal'},
+            {sigma:-17, var:1, distr:'Top'},
+            {sigma:0, var:0, distr:'Equal'},
+            {sigma:-13, var:2, distr:'Top'},
+            {sigma:0, var:0, distr:'Equal'},
+            {sigma:8, var:8, distr:'Equal'},
+            {sigma:15, var:1, distr:'Bottom'},
+            {sigma:17, var:1, distr:'Bottom'},
+            {sigma:9, var:1, distr:'Middle'},
+            {sigma:-15, var:2, distr:'Top'},
+            {sigma:-5, var:2, distr:'Middle'},
+            {sigma:5, var:2, distr:'Middle'},
+            {sigma:15, var:2, distr:'Bottom'},
+            {sigma:-5, var:1, distr:'Middle'},
+            {sigma:-11, var:2, distr:'Top'},
+            {sigma:-8, var:7, distr:'Equal'},
+            {sigma:-4, var:0, distr:'Middle'},
+            {sigma:5, var:1, distr:'Middle'}
+        ];
+
+        const options = {task: 'classification',debug: true}
+
+        const nn = ml5.neuralNetwork(options);
+
+        data.forEach(item => {
+            const inputs = {
+                s: item.sigma, 
+                v: item.var
+            };
+            const output = {
+                d: item.distr
+            };
+
+            nn.addData(inputs, output);
+        });
+
+        nn.normalizeData();
+
+        const trainingOptions = {epochs: 50,batchSize: 2}
+        nn.train(trainingOptions, classify);
+
+        function classify(){
+            const input = {
+                s: 3,
+                v: 4
+            }
+            nn.classify(input, handleResults);
+        }
+
+        function handleResults(error, result) {
+            if(error){
+            console.error(error);
+            return;
+            }
+            console.log(result);
+        }
+    </script>
+  </body>
+</html>

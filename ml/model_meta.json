@@ -1,0 +1,1 @@
+{"inputUnits":[2],"outputUnits":4,"inputs":{"s":{"dtype":"number","min":-19,"max":17},"v":{"dtype":"number","min":0,"max":8}},"outputs":{"d":{"dtype":"string","min":0,"max":1,"uniqueValues":["Top","Bottom","Equal","Middle"],"legend":{"Top":[1,0,0,0],"Bottom":[0,1,0,0],"Equal":[0,0,1,0],"Middle":[0,0,0,1]}}},"isNormalized":true}
