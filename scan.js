@@ -1,6 +1,3 @@
-//https://easylist.to/easylist/easylist.txt
-
-
 (function(){
     const GRID_WIDTH = 48;
 
@@ -15,6 +12,7 @@
         console.log("jQuery is present in page");
 
     var result = {};
+    // Once the scan() function has returned a result, we can pass it on to the extension window
     scan().then(result => chrome.runtime.sendMessage(result));
 
     function delay() 
@@ -22,26 +20,26 @@
         return new Promise( resolve => setTimeout(resolve, 2000));
     }
 
+    /*
+    This main method is asynchronous so we can force the script to only return
+    a result once scanning is complete
+    */
     async function scan()
     {
         await scrollDown();
-        var regexList = blacklist.join();
-        var adElements = $(regexList);
-        adElements = filterUnwantedElements(adElements);
-        var adYChart = getChartFromAdLocations(adElements, true);
+        var adElements = filterUnwantedElements($(blacklist.join()));
+        var adYChart = generateGridMapFromDistribution(adElements, true);
         var pElements = $('p');
-        var pYChart = getChartFromAdLocations(pElements, false);
+        var pYChart = generateGridMapFromDistribution(pElements, false);
         drawGraph(pYChart, adYChart);
         result['numAdElements'] = adElements.length;
         estimateParagraphInterruptions(pYChart, adYChart);
         var spread = determineVerticalElementSpread(adYChart, true);
         determineVerticalElementSpread(pYChart, false);
-        //classifyElementSpread(spread);
+        classifyElementSpread(spread);
         determinePageType();
 
-        result['h'] = $("body").height();
-        result['w'] = $("body").width();
-
+        // Draw borders around detected elements for visual representation
         for (let i=0;i<adElements.length;i++)
             $(adElements[i]).css("border", "5px dashed #002bff");
 
@@ -51,6 +49,11 @@
         return new Promise(resolve => resolve(result));
     }
 
+    /*
+    This function scrolls the page until it ends, or until a limit is reached.
+    It in particular needs to return a promise as we cannot start
+    scanning without the scrolling being completed
+    */
     async function scrollDown()
     {
         var pageHeight = $("body").height();
@@ -63,21 +66,12 @@
                 behavior: "smooth"
             });
 
+            // Delay the page to allow lazy loading elements to load from the network
             await delay();
 
-            if ($("body").height()===pageHeight)
+            if (($("body").height()===pageHeight)||($("body").height()>20000))
             {
-                //Finite
-                scrollStateActive = false;
-                window.scroll({
-                    left: 0,
-                    top: 0,
-                    behavior: "smooth"
-                });
-            }
-            else if ($("body").height()>20000)
-            {
-                //Treat as infinite
+                //Page end either reached or limit reached
                 scrollStateActive = false;
                 window.scroll({
                     left: 0,
@@ -94,7 +88,7 @@
     /*
     Remove any elements that have a width or height < 50px
     These elements are typically empty spacing, logos or mismatches
-    Also remove hidden elements
+    Also call the function to remove hidden elements
     */
     function filterUnwantedElements(tempAdElements)
     {
@@ -118,7 +112,6 @@
         var clashingAds = {};
         for (var i=0; i<adElements.length;i++)
             for (var j=0; j<adElements.length;j++)
-            {
                 if (j!==i)
                     if (adIsInSameLocation(getOffset($(adElements[i])), getOffset($(adElements[j]))))
                     {
@@ -131,7 +124,6 @@
                             tempItems.push($(adElements[i]));
                         clashingAds[locationId] = tempItems;
                     }
-            }
 
         var adsToRemove = [];
 
@@ -155,6 +147,9 @@
         return filteredElements;
     }
 
+    /*
+    Detect whether two passed advert elements may overlap within a margin of error 
+    */
     function adIsInSameLocation(aOffset, bOffset)
     {        
         if ((Math.abs(aOffset.left-bOffset.left)<20) && (Math.abs(aOffset.right-bOffset.right)<20) && (Math.abs(aOffset.top-bOffset.top)<20) && (Math.abs(aOffset.bottom-bOffset.bottom)<20))
@@ -162,6 +157,10 @@
         return ((Math.abs(aOffset.top-bOffset.top)<20)&&(Math.abs(aOffset.bottom-bOffset.bottom)<20))
     }
 
+    /*
+    This is used in removing overlapping elements. An ID of some sort is needed for each element,
+    where overlapping elements will return the same ID
+    */
     function getLocationId(offset)
     {
         var id = Math.floor(offset.left/20);
@@ -171,7 +170,11 @@
         return id;
     }
 
-    function getChartFromAdLocations(adElements, isAd)
+    /*
+    Given that the coordinates of each advert element is known, the grid map
+    can be populated from these properties
+    */
+    function generateGridMapFromDistribution(adElements, isAd)
     {
         var pageWidth = $("body").width();
         var pageHeight = $("body").height();
@@ -250,6 +253,7 @@
         
         console.log("% area: "+totalAdArea/totalPageArea);
         var heatmap = pageHeatmap.toDataURL();
+        result['heatmap'] = heatmap;
 
         totalAdArea = 0;
         
@@ -258,6 +262,9 @@
         return yGraph;
     }
 
+    /*
+    Below function is for graphical visualization and experimentation. No use otherwise
+    */
     function drawGraph(pG, adG)
     {
         var chartElement = document.createElement('canvas');
@@ -334,14 +341,12 @@
         }
         
         return trimToColFromLeft+(GRID_WIDTH-trimToColFromRight);
-        for (var x=0;x<=trimToColFromLeft;x++)
-            delete yGraph[x];
-        for (var x=GRID_WIDTH;x>=trimToColFromRight;x--)
-            delete yGraph[x];
-        console.log(yGraph);
-        return yGraph;
     }
 
+    /*
+    With the vertical distribution of advert and paragraph elements know, it can be
+    estimated where an advert interrupts paragraph content
+    */
     function estimateParagraphInterruptions(pYChart, adYChart)
     {
         var gaps = [];
@@ -378,8 +383,13 @@
                     if (adYChart[i]!=0)
                         numAdRows += 1;
                 }
-                // https://www.desmos.com/calculator/inudavxmqu
-                // Threshold for advert size between paragraphs to count
+                /* 
+                https://www.desmos.com/calculator/inudavxmqu
+                Threshold for advert size between paragraphs to count. 
+                If there happens to be a big gap between paragraphs, it is likely
+                not (only) interuppted by advert elements and we should not 
+                count it as an interruption
+                */
                 var threshold = Math.round(Math.sqrt(1.25*startEndDiff));
                 // If threshold is less than numAdRows, we can count this ad
                 if (numAdRows>=threshold)
@@ -395,6 +405,9 @@
         return numAdGaps;
     }
 
+    /*
+    This function determines the expected equal vs actual distribution of elements
+    */
     function determineVerticalElementSpread(yChart, isAd)
     {
         const countOccurrences = (arr, val) => arr.reduce((a, v) => (v === val ? a + 1 : a), 0);
@@ -500,6 +513,10 @@
 
     }
 
+    /* 
+    Below is unused machine learning approach in classifying whether a page is top/middle/bottom
+    heavy in distribution
+    */
     function classifyElementSpread(spread)
     {
         const data = [
@@ -567,6 +584,9 @@
         }
     }
 
+    /*
+    Here the results and ranking are determined and concluded
+    */
     function determinePageType()
     {
         // Integer divide the advert area by 5 and get the relevant value
