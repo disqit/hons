@@ -32,5 +32,9 @@ function showAnswer(result)
 {
     console.log(result);
     $('#conclude').html(result["conclusion"]);
+    /*$('#heatMapLink').html("Advert heatmap: ");
+    $('#link').attr("href",result["heatmap"]);
+    $('#link').attr("target","_blank");
+    $('#link').html("View");*/
 }
 

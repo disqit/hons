@@ -1,5 +1,5 @@
 (function(){
-    const GRID_WIDTH = 48;
+    const GRID_WIDTH = 11;
 
     window.stop();
 
@@ -31,12 +31,12 @@
         var adYChart = generateGridMapFromDistribution(adElements, true);
         var pElements = $('p');
         var pYChart = generateGridMapFromDistribution(pElements, false);
-        drawGraph(pYChart, adYChart);
+        //drawGraph(pYChart, adYChart);
         result['numAdElements'] = adElements.length;
         estimateParagraphInterruptions(pYChart, adYChart);
         var spread = determineVerticalElementSpread(adYChart, true);
         determineVerticalElementSpread(pYChart, false);
-        classifyElementSpread(spread);
+        //classifyElementSpread(spread);
         determinePageType();
 
         // Draw borders around detected elements for visual representation
@@ -210,10 +210,10 @@
         for (let i=0;i<adElements.length;i++)
         {
             let adOffset = getOffset($(adElements[i]));
-            let left = Math.floor(adOffset['left']/xPartitionWidth);
-            let right = Math.floor(adOffset['right']/xPartitionWidth);
-            let top = Math.floor(adOffset['top']/yParitionHeight);
-            let bottom = Math.floor(adOffset['bottom']/yParitionHeight);
+            let left = Math.round(adOffset['left']/xPartitionWidth);
+            let right = Math.round(adOffset['right']/xPartitionWidth);
+            let top = Math.round(adOffset['top']/yParitionHeight);
+            let bottom = Math.round(adOffset['bottom']/yParitionHeight);
             for (var y=top; y<=bottom; y++)
                 yGraph[y] += right-left;
 
@@ -253,7 +253,6 @@
         
         console.log("% area: "+totalAdArea/totalPageArea);
         var heatmap = pageHeatmap.toDataURL();
-        result['heatmap'] = heatmap;
 
         totalAdArea = 0;
         
@@ -606,7 +605,7 @@
 
         const interruptRanks =
         {
-            0: "There is only one or fewer paragraphs interrupted by adverts",
+            0: "There are only one or fewer paragraphs interrupted by adverts",
             1: "Paragraphs are interrupted by adverts two or three times",
             2: "Paragraphs are interrupted by adverts at least several times",
             3: "Paragraphs are badly interrupted with adverts"
@@ -646,8 +645,8 @@
 
         var score = adLevel+letterScore;
 
-        var adConclusion = "<br><br>There are <b>"+ result['numAdElements'] + "</b> advert elements detected, taking up <b>" +
-                            (result['totalAdArea']*100).toFixed(0)+"%</b> of the content area.<br><br>"+ interruptConclusion
+        var adConclusion = "There are <b>"+ result['numAdElements'] + "</b> advert element(s) detected, taking up <b>" +
+                            (result['totalAdArea']*100).toFixed(0)+"%</b> of the screen area.<br><br>"+ interruptConclusion
                             +".<br><br>Adverts "+ adDistributionConclusion+".<br><br>We can estimate that there are "+adAreaConclusion+additionalComment+
                             "<br><br><br><b style='font-size:1.3em;'>Score: "+score+"</b><br>"; 
         adConclusion += "<i>Score meaning: <br>Ad prominence goes from 0 (none) to 9 (60%+ area)."+
