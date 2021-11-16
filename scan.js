@@ -1,5 +1,5 @@
 (function(){
-    const GRID_WIDTH = 11;
+    const GRID_WIDTH = 6;
 
     window.stop();
 
