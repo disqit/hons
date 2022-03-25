@@ -1,3 +1,5 @@
+*Submitted as part of my 4th year Computer Science major project*
+
 # 🔎 AdAnalysis 🔎
 
 If you're reading this, it's assumed you have downloaded the .zip or complete repository from the GitHub page. If not, go [download it](https://github.com/jbofa/hons-project) before proceeding.
